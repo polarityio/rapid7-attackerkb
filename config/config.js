@@ -24,7 +24,7 @@ module.exports = {
    */
   description: 'This integration queries CVE IDs against the AttackerKB Topic API.',
   entityTypes: ['cve'],
-  styles: ["./styles/style.less"],
+  styles: ['./styles/style.less'],
   /**
    * Provide custom component logic and template for rendering the integration details block.  If you do not
    * provide a custom template and/or component then the integration will display data as a table of key value
@@ -67,7 +67,7 @@ module.exports = {
     // the url parameter (by embedding the auth info in the uri)
     proxy: '',
 
-    rejectUnauthorized: false
+    rejectUnauthorized: true
   },
   logging: {
     level: 'info' //trace, debug, info, warn, error, fatal
@@ -79,34 +79,35 @@ module.exports = {
    * @type Array
    * @optional
    */
-   options: [
-     {
-       key: "apiKey",
-       name: "Valid AttackerKB API Key",
-       description: "Valid AttackerKB API Key",
-       default: "",
-       type: "password",
-       userCanEdit: true,
-       adminOnly: false
-     },
-     {
-        key: 'resultCount',
-        name: 'Maximum Number of Results',
-        description:
-          'The maximum number of API search results that will be displayed in the Polarity Overlay window. (Default: 5)',
-        default: 5,
-        type: 'number',
-        userCanEdit: true,
-        adminOnly: false
-      },
-      {
-        key: 'publicOnly',
-        name: 'Only Show Publicly Disclosed Vulnerabilities',
-        description: 'If checked, only vulnerabilites with a current state of PUBLIC will be returned.',
-        default: true,
-        type: 'boolean',
-        userCanEdit: true,
-        adminOnly: false
-      }
-   ]
+  options: [
+    {
+      key: 'apiKey',
+      name: 'Valid AttackerKB API Key',
+      description: 'Valid AttackerKB API Key',
+      default: '',
+      type: 'password',
+      userCanEdit: true,
+      adminOnly: false
+    },
+    {
+      key: 'resultCount',
+      name: 'Maximum Number of Results',
+      description:
+        'The maximum number of API search results that will be displayed in the Polarity Overlay window. (Default: 5)',
+      default: 5,
+      type: 'number',
+      userCanEdit: true,
+      adminOnly: false
+    },
+    {
+      key: 'publicOnly',
+      name: 'Only Show Publicly Disclosed Vulnerabilities',
+      description:
+        'If checked, only vulnerabilites with a current state of PUBLIC will be returned.',
+      default: true,
+      type: 'boolean',
+      userCanEdit: true,
+      adminOnly: false
+    }
+  ]
 };

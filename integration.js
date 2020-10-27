@@ -53,23 +53,32 @@ function doLookup(entities, options, cb) {
       method: 'GET',
       uri: `https://api.attackerkb.com/v1/topics`,
       headers: {
-        Authorization: "basic " + options.apiKey,
+        Authorization: 'basic ' + options.apiKey
       },
       json: true
     };
 
     if (options.publicOnly === true) {
-      requestOptions.qs = { name: entity.value, size: options.resultCount, sort: 'revisionDate:desc', metadata: 'PUBLIC' }
+      requestOptions.qs = {
+        name: entity.value,
+        size: options.resultCount,
+        sort: 'revisionDate:desc',
+        metadata: 'PUBLIC'
+      };
     } else if (options.publicOnly === false) {
-      requestOptions.qs = { name: entity.value, size: options.resultCount, sort: 'revisionDate:desc' }
+      requestOptions.qs = {
+        name: entity.value,
+        size: options.resultCount,
+        sort: 'revisionDate:desc'
+      };
     } else {
       return;
     }
 
     Logger.trace({ requestOptions }, 'Request Options');
 
-    tasks.push(function(done) {
-      requestWithDefaults(requestOptions, function(error, res, body) {
+    tasks.push(function (done) {
+      requestWithDefaults(requestOptions, function (error, res, body) {
         let processedResult = handleRestError(error, entity, res, body);
 
         if (processedResult.error) {
@@ -90,7 +99,13 @@ function doLookup(entities, options, cb) {
     }
 
     results.forEach((result) => {
-      if (!result || result.body === null || result.body.length === 0 || result.body.data === null || result.body.data.length === 0) {
+      if (
+        !result ||
+        result.body === null ||
+        result.body.length === 0 ||
+        result.body.data === null ||
+        result.body.data.length === 0
+      ) {
         lookupResults.push({
           entity: result.entity,
           data: null
@@ -166,7 +181,8 @@ function handleRestError(error, entity, res, body) {
 function validateOption(errors, options, optionName, errMessage) {
   if (
     typeof options[optionName].value !== 'string' ||
-    (typeof options[optionName].value === 'string' && options[optionName].value.length === 0)
+    (typeof options[optionName].value === 'string' &&
+      options[optionName].value.length === 0)
   ) {
     errors.push({
       key: optionName,
