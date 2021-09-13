@@ -1,19 +1,19 @@
 'use strict';
 
 const request = require('request');
+const Bottleneck = require('bottleneck/es5');
+const _ = require('lodash');
 const config = require('./config/config');
-const async = require('async');
 const fs = require('fs');
 
 let Logger;
 let requestWithDefaults;
-
-const MAX_PARALLEL_LOOKUPS = 10;
+let limiter = null;
 
 function startup(logger) {
   let defaults = {};
   Logger = logger;
-
+  
   const { cert, key, passphrase, ca, proxy, rejectUnauthorized } = config.request;
 
   if (typeof cert === 'string' && cert.length > 0) {
@@ -43,87 +43,126 @@ function startup(logger) {
   requestWithDefaults = request.defaults(defaults);
 }
 
-function doLookup(entities, options, cb) {
-  let lookupResults = [];
-  let tasks = [];
-
-  Logger.debug(entities);
-  entities.forEach((entity) => {
-    let requestOptions = {
-      method: 'GET',
-      uri: `https://api.attackerkb.com/v1/topics`,
-      headers: {
-        Authorization: 'basic ' + options.apiKey
-      },
-      json: true
-    };
-
-    if (options.publicOnly === true) {
-      requestOptions.qs = {
-        name: entity.value,
-        size: options.resultCount,
-        sort: 'revisionDate:desc',
-        metadata: 'PUBLIC'
-      };
-    } else if (options.publicOnly === false) {
-      requestOptions.qs = {
-        name: entity.value,
-        size: options.resultCount,
-        sort: 'revisionDate:desc'
-      };
-    } else {
-      return;
-    }
-
-    Logger.trace({ requestOptions }, 'Request Options');
-
-    tasks.push(function (done) {
-      requestWithDefaults(requestOptions, function (error, res, body) {
-        let processedResult = handleRestError(error, entity, res, body);
-
-        if (processedResult.error) {
-          done(processedResult);
-          return;
-        }
-
-        done(null, processedResult);
-      });
-    });
+function _setupLimiter(options) {
+  limiter = new Bottleneck({
+    maxConcurrent: Number.parseInt(options.maxConcurrent, 10), // no more than 5 lookups can be running at single time
+    highWater: 50, // no more than 50 lookups can be queued up
+    strategy: Bottleneck.strategy.OVERFLOW,
+    minTime: Number.parseInt(options.minTime, 10) // don't run lookups faster than 1 every 200 ms
   });
+}
 
-  async.parallelLimit(tasks, MAX_PARALLEL_LOOKUPS, (err, results) => {
-    if (err) {
-      Logger.error({ err: err }, 'Error');
-      cb(err);
+function _lookupEntity(entity, options, cb) {
+  let requestOptions = {
+    method: 'GET',
+    uri: `https://api.attackerkb.com/v1/topics`,
+    headers: {
+      Authorization: 'basic ' + options.apiKey
+    },
+    json: true
+  };
+
+  if (options.publicOnly === true) {
+    requestOptions.qs = {
+      name: entity.value,
+      size: options.resultCount,
+      sort: 'revisionDate:desc',
+      metadata: 'PUBLIC'
+    };
+  } else if (options.publicOnly === false) {
+    requestOptions.qs = {
+      name: entity.value,
+      size: options.resultCount,
+      sort: 'revisionDate:desc'
+    };
+  } else {
+    return;
+  }
+
+  Logger.trace({ requestOptions }, 'Request Options');
+
+  requestWithDefaults(requestOptions, function (error, res, body) {
+    let processedResult = handleRestError(error, entity, res, body);
+
+    if (processedResult.error) {
+      cb(processedResult);
       return;
     }
 
-    results.forEach((result) => {
-      if (
-        !result ||
-        result.body === null ||
-        result.body.length === 0 ||
-        result.body.data === null ||
-        result.body.data.length === 0
-      ) {
+    cb(null, processedResult);
+    return;
+  });
+}
+
+function doLookup(entities, options, cb) {
+  const lookupResults = [];
+  const errors = [];
+  let numConnectionResets = 0;
+  let numThrottled = 0;
+  let hasValidIndicator = false;
+  Logger.debug(entities);
+
+  if (!limiter) _setupLimiter(options);
+
+  _setupLimiter(options);
+
+  entities.forEach((entity) => {
+    hasValidIndicator = true;
+    limiter.submit(_lookupEntity, entity, options, (err, result) => {
+      const maxRequestQueueLimitHit =
+        (_.isEmpty(err) && _.isEmpty(result)) ||
+        (err && err.message === 'This job has been dropped by Bottleneck');
+
+      const isConnectionReset =
+        _.get(err, 'errors[0].meta.err.code', '') === 'ECONNRESET';
+
+      if (maxRequestQueueLimitHit || isConnectionReset) {
+        // Tracking for logging purposes
+        if (isConnectionReset) numConnectionResets++;
+        if (maxRequestQueueLimitHit) numThrottled++;
+
         lookupResults.push({
-          entity: result.entity,
-          data: null
-        });
-      } else {
-        lookupResults.push({
-          entity: result.entity,
+          entity,
+          isVolatile: true, // prevent limit reached results from being cached
           data: {
-            summary: [],
-            details: result.body
+            summary: ['Lookup limit reached'],
+            details: {
+              maxRequestQueueLimitHit,
+              isConnectionReset
+            }
           }
         });
+      } else if (err) {
+        errors.push(err);
+      } else {
+        lookupResults.push(result);
+      }
+
+      if (lookupResults.length + errors.length === entities.length) {
+        if (numConnectionResets > 0 || numThrottled > 0) {
+          log.warn(
+            {
+              numEntitiesLookedUp: entities.length,
+              numConnectionResets: numConnectionResets,
+              numLookupsThrottled: numThrottled
+            },
+            'Lookup Limit Error'
+          );
+        }
+        // we got all our results
+        if (errors.length > 0) {
+          cb(errors);
+        } else {
+          // I can log the results before the callback is called.
+          cb(null, lookupResults);
+        }
       }
     });
-
-    Logger.debug({ lookupResults }, 'Results');
-    cb(null, lookupResults);
   });
+
+  if (!hasValidIndicator) {
+    cb(null, []);
+  }
 }
 
 function handleRestError(error, entity, res, body) {

@@ -4,8 +4,9 @@
   "version": "3.0.0-beta",
   "private": true,
   "dependencies": {
-    "request": "^2.88",
+    "async": "^2.6",
+    "bottleneck": "^2.19.5",
     "lodash": "^4.17.11",
-    "async": "^2.6"
+    "request": "^2.88"
   }
 }
