@@ -1,228 +1,298 @@
-{{#if details.data}}
-  <div>
-    <span class="p-title">{{fa-icon "edit" fixedWidth=true}} Topic Detail</span>
+{{#if details.errorMessage}}
+  <div class="mt-2">
+    <div class="alert alert-danger">
+      {{! 
+        details.errorMessage should contain custom error message info about the failure.
+        For example, we could not only have why it failed, but if it is a limit error
+        we can put a timer here counting down to when retrying makes sense etc.
+      }}
+      <pre>{{details.errorMessage}}</pre>
+    </div>
+    {{! Can optionally use the "allowRetry" boolean flag in details to disable retry logic }}
+    {{#if (not (eq details.allowRetry false))}}
+      <button
+        type="button"
+        class="p-btn btn btn-sm btn-secondary retry-btn mt-2"
+        {{action "retryLookup"}}
+      >
+        {{#if running}}
+          {{fa-icon icon="spinner-third" fixedWidth=true spin=true}}
+        {{else}}
+          Retry Search
+        {{/if}}
+      </button>
+      <div class="mt-1">
+        <span class="p-footnote">
+          You can retry your search by pressing the "Retry Search" button.</span>
+      </div>
+    {{/if}}
   </div>
-  {{#each details.data as |detail index|}}
-    {{#if (gt index 0)}}
-      <hr>
-    {{/if}}
-    <h1 class="p-title">
-      Topic #{{inc index}}
-    </h1>
-    {{#if detail.name}}
-      <div>
+{{else}}
+  {{#if block.data}}
+    <div>
+      <span class="p-title">{{fa-icon "edit" fixedWidth=true}} Topic Detail</span>
+    </div>
+    {{#each block.data.details as |detail index|}}
+      {{#if (gt index 0)}}
+        <hr />
+      {{/if}}
+      <h1 class="p-title">
+        Topic #{{inc index}}
+      </h1>
+      {{#if detail.name}}
+        <div>
           <span class="p-key">Topic Name: </span>
-          <span class="p-value"><a href="https://attackerkb.com/topics/{{detail.id}}">{{detail.name}} {{fa-icon "external-link-square" class="external-link-icon"}}</a></span>
-      </div>
-    {{/if}}
-    {{#if (gte detail.score.attackerValue 4.5)}}
-      <div>
-          <span class="p-key">Attacker Value: </span>
-          {{fa-icon "signal" fixedWidth=true}} <span class="p-value" style="color:purple"><b>VERY HIGH</b></span>
-      </div>
-    {{/if}}
-    {{#if (gte detail.score.attackerValue 3.5)}}
-      {{#if (lt detail.score.attackerValue 4.5)}}
-      <div>
-          <span class="p-key">Attacker Value: </span>
-          {{fa-icon "signal-4" fixedWidth=true}} <span class="p-value" style="color:red"><b>HIGH</b></span>
-      </div>
+          <span class="p-value"><a
+              href="https://attackerkb.com/topics/{{detail.id}}"
+            >{{detail.name}}
+              {{fa-icon "external-link-square" class="external-link-icon"}}</a></span>
+        </div>
       {{/if}}
-    {{/if}}
-    {{#if (gte detail.score.attackerValue 2.5)}}
-      {{#if (lt detail.score.attackerValue 3.5)}}
-      <div>
+      {{#if (gte detail.score.attackerValue 4.5)}}
+        <div>
           <span class="p-key">Attacker Value: </span>
-          {{fa-icon "signal-3" fixedWidth=true}} <span class="p-value" style="color:orange"><b>MODERATE</b></span>
-      </div>
+          {{fa-icon "signal" fixedWidth=true}}
+          <span class="p-value" style="color:purple"><b>VERY HIGH</b></span>
+        </div>
       {{/if}}
-    {{/if}}
-    {{#if (gte detail.score.attackerValue 1.5)}}
-      {{#if (lt detail.score.attackerValue 2.5)}}
-      <div>
-          <span class="p-key">Attacker Value: </span>
-          {{fa-icon "signal-2" fixedWidth=true}} <span class="p-value" style="color:yellow"><b>LOW</b></span>
-      </div>
+      {{#if (gte detail.score.attackerValue 3.5)}}
+        {{#if (lt detail.score.attackerValue 4.5)}}
+          <div>
+            <span class="p-key">Attacker Value: </span>
+            {{fa-icon "signal-4" fixedWidth=true}}
+            <span class="p-value" style="color:red"><b>HIGH</b></span>
+          </div>
+        {{/if}}
       {{/if}}
-    {{/if}}
-    {{#if (gt detail.score.attackerValue 0)}}
-      {{#if (lt detail.score.attackerValue 1.5)}}
-      <div>
-          <span class="p-key">Attacker Value: </span>
-          {{fa-icon "signal-1" fixedWidth=true}} <span class="p-value" style="color:green"><b>VERY LOW</b></span>
-      </div>
+      {{#if (gte detail.score.attackerValue 2.5)}}
+        {{#if (lt detail.score.attackerValue 3.5)}}
+          <div>
+            <span class="p-key">Attacker Value: </span>
+            {{fa-icon "signal-3" fixedWidth=true}}
+            <span class="p-value" style="color:orange"><b>MODERATE</b></span>
+          </div>
+        {{/if}}
       {{/if}}
-    {{/if}}
-    {{#if (eq detail.score.attackerValue 0)}}
-      <div>
+      {{#if (gte detail.score.attackerValue 1.5)}}
+        {{#if (lt detail.score.attackerValue 2.5)}}
+          <div>
+            <span class="p-key">Attacker Value: </span>
+            {{fa-icon "signal-2" fixedWidth=true}}
+            <span class="p-value" style="color:yellow"><b>LOW</b></span>
+          </div>
+        {{/if}}
+      {{/if}}
+      {{#if (gt detail.score.attackerValue 0)}}
+        {{#if (lt detail.score.attackerValue 1.5)}}
+          <div>
+            <span class="p-key">Attacker Value: </span>
+            {{fa-icon "signal-1" fixedWidth=true}}
+            <span class="p-value" style="color:green"><b>VERY LOW</b></span>
+          </div>
+        {{/if}}
+      {{/if}}
+      {{#if (eq detail.score.attackerValue 0)}}
+        <div>
           <span class="p-key">Attacker Value: </span>
           <span class="p-value" style="color:black"><b>UNKNOWN</b></span>
-      </div>
-    {{/if}}
-    {{#if (gte detail.score.exploitability 4.5)}}
-      <div>
-          <span class="p-key">Exploitability: </span>
-          {{fa-icon "signal" fixedWidth=true}} <span class="p-value" style="color:purple"><b>VERY HIGH</b></span>
-      </div>
-    {{/if}}
-    {{#if (gte detail.score.exploitability 3.5)}}
-      {{#if (lt detail.score.exploitability 4.5)}}
-      <div>
-          <span class="p-key">Exploitability: </span>
-          {{fa-icon "signal-4" fixedWidth=true}} <span class="p-value" style="color:red"><b>HIGH</b></span>
-      </div>
+        </div>
       {{/if}}
-    {{/if}}
-    {{#if (gte detail.score.exploitability 2.5)}}
-      {{#if (lt detail.score.exploitability 3.5)}}
-      <div>
+      {{#if (gte detail.score.exploitability 4.5)}}
+        <div>
           <span class="p-key">Exploitability: </span>
-          {{fa-icon "signal-3" fixedWidth=true}} <span class="p-value" style="color:orange"><b>MODERATE</b></span>
-      </div>
+          {{fa-icon "signal" fixedWidth=true}}
+          <span class="p-value" style="color:purple"><b>VERY HIGH</b></span>
+        </div>
       {{/if}}
-    {{/if}}
-    {{#if (gte detail.score.exploitability 1.5)}}
-      {{#if (lt detail.score.exploitability 2.5)}}
-      <div>
-          <span class="p-key">Exploitability: </span>
-          {{fa-icon "signal-2" fixedWidth=true}} <span class="p-value" style="color:yellow"><b>LOW</b></span>
-      </div>
+      {{#if (gte detail.score.exploitability 3.5)}}
+        {{#if (lt detail.score.exploitability 4.5)}}
+          <div>
+            <span class="p-key">Exploitability: </span>
+            {{fa-icon "signal-4" fixedWidth=true}}
+            <span class="p-value" style="color:red"><b>HIGH</b></span>
+          </div>
+        {{/if}}
       {{/if}}
-    {{/if}}
-    {{#if (gt detail.score.exploitability 0)}}
-      {{#if (lt detail.score.exploitability 1.5)}}
-      <div>
-          <span class="p-key">Exploitability: </span>
-          {{fa-icon "signal-1" fixedWidth=true}} <span class="p-value" style="color:green"><b>VERY LOW</b></span>
-      </div>
+      {{#if (gte detail.score.exploitability 2.5)}}
+        {{#if (lt detail.score.exploitability 3.5)}}
+          <div>
+            <span class="p-key">Exploitability: </span>
+            {{fa-icon "signal-3" fixedWidth=true}}
+            <span class="p-value" style="color:orange"><b>MODERATE</b></span>
+          </div>
+        {{/if}}
       {{/if}}
-    {{/if}}
-    {{#if (eq detail.score.exploitability 0)}}
-      <div>
+      {{#if (gte detail.score.exploitability 1.5)}}
+        {{#if (lt detail.score.exploitability 2.5)}}
+          <div>
+            <span class="p-key">Exploitability: </span>
+            {{fa-icon "signal-2" fixedWidth=true}}
+            <span class="p-value" style="color:yellow"><b>LOW</b></span>
+          </div>
+        {{/if}}
+      {{/if}}
+      {{#if (gt detail.score.exploitability 0)}}
+        {{#if (lt detail.score.exploitability 1.5)}}
+          <div>
+            <span class="p-key">Exploitability: </span>
+            {{fa-icon "signal-1" fixedWidth=true}}
+            <span class="p-value" style="color:green"><b>VERY LOW</b></span>
+          </div>
+        {{/if}}
+      {{/if}}
+      {{#if (eq detail.score.exploitability 0)}}
+        <div>
           <span class="p-key">Exploitability: </span>
           <span class="p-value" style="color:black"><b>UNKNOWN</b></span>
-      </div>
-    {{/if}}
-    {{#if detail.disclosureDate}}
-      <div>
+        </div>
+      {{/if}}
+      {{#if detail.disclosureDate}}
+        <div>
           <span class="p-key">Disclosure Date: </span>
           <span class="p-value">{{detail.disclosureDate}}</span>
-      </div>
-    {{/if}}
-    {{#if detail.created}}
-      <div>
+        </div>
+      {{/if}}
+      {{#if detail.created}}
+        <div>
           <span class="p-key">Topic Created: </span>
           <span class="p-value">{{detail.created}}</span>
-      </div>
-    {{/if}}
-    {{#if detail.revisionDate}}
-      <div>
+        </div>
+      {{/if}}
+      {{#if detail.revisionDate}}
+        <div>
           <span class="p-key">Topic Last Updated: </span>
           <span class="p-value">{{detail.revisionDate}}</span>
-      </div>
-    {{/if}}
-    {{#if detail.document}}
-      <div>
-          <span class="p-key">Description: </span><br>
+        </div>
+      {{/if}}
+      {{#if detail.document}}
+        <div>
+          <span class="p-key">Description: </span><br />
           <span class="p-value">{{detail.document}}</span>
-      </div>
-    {{/if}}
-    {{#if detail.metadata.vendor.vendorNames}}
-      <h1 class="p-title">{{fa-icon "store" fixedWidth=true}}Vendors: </h1>
-      {{#each detail.metadata.vendor.vendorNames as |vendor|}}
-        <span class="p-value">{{vendor}}</span>
-      {{/each}}
-    {{/if}}
-    {{#if detail.metadata.vendor.productNames}}
-      <h1 class="p-title">{{fa-icon "box-open" fixedWidth=true}}Products: </h1>
-      {{#each detail.metadata.vendor.productNames as |product|}}
-        <span class="p-value">{{product}}</span>
-      {{/each}}
-    {{/if}}
-    {{#if detail.metadata.vulnerable-versions}}
-      <h1 class="p-title">{{fa-icon "bug" fixedWidth=true}}Vulnerable Versions: </h1>
-      {{#each detail.metadata.vulnerable-versions as |version|}}
-        <span class="source-tag">{{version}}</span>
-      {{/each}}
-    {{/if}}
-    {{#if detail.metadata.baseMetricV3}}
-      <h1 class="p-title">{{fa-icon "star" fixedWidth=true}}CVSS v3 Detail: </h1>
-    {{/if}}
-    {{#if detail.metadata.baseMetricV3.cvssV3.baseScore}}
-      <div>
+        </div>
+      {{/if}}
+      {{#if detail.metadata.vendor.vendorNames}}
+        <h1 class="p-title">{{fa-icon "store" fixedWidth=true}}Vendors: </h1>
+        {{#each detail.metadata.vendor.vendorNames as |vendor|}}
+          <span class="p-value">{{vendor}}</span>
+        {{/each}}
+      {{/if}}
+      {{#if detail.metadata.vendor.productNames}}
+        <h1 class="p-title">{{fa-icon "box-open" fixedWidth=true}}Products: </h1>
+        {{#each detail.metadata.vendor.productNames as |product|}}
+          <span class="p-value">{{product}}</span>
+        {{/each}}
+      {{/if}}
+      {{#if detail.metadata.vulnerable-versions}}
+        <h1 class="p-title">{{fa-icon "bug" fixedWidth=true}}Vulnerable Versions: </h1>
+        {{#each detail.metadata.vulnerable-versions as |version|}}
+          <span class="source-tag">{{version}}</span>
+        {{/each}}
+      {{/if}}
+      {{#if detail.metadata.baseMetricV3}}
+        <h1 class="p-title">{{fa-icon "star" fixedWidth=true}}CVSS v3 Detail: </h1>
+      {{/if}}
+      {{#if detail.metadata.baseMetricV3.cvssV3.baseScore}}
+        <div>
           <span class="p-key">Base Score: </span>
           <span class="p-value">{{detail.metadata.baseMetricV3.cvssV3.baseScore}}</span>
-      </div>
-    {{/if}}
-    {{#if detail.metadata.baseMetricV3.cvssV3.attackVector}}
-      <div>
+        </div>
+      {{/if}}
+      {{#if detail.metadata.baseMetricV3.cvssV3.attackVector}}
+        <div>
           <span class="p-key">Vector: </span>
-          <span class="p-value">{{detail.metadata.baseMetricV3.cvssV3.attackVector}}</span>
-      </div>
-    {{/if}}
-    {{#if detail.metadata.baseMetricV3.cvssV3.baseSeverity}}
-      <div>
+          <span
+            class="p-value"
+          >{{detail.metadata.baseMetricV3.cvssV3.attackVector}}</span>
+        </div>
+      {{/if}}
+      {{#if detail.metadata.baseMetricV3.cvssV3.baseSeverity}}
+        <div>
           <span class="p-key">Base Severity: </span>
-          <span class="p-value">{{detail.metadata.baseMetricV3.cvssV3.baseSeverity}}</span>
-      </div>
-    {{/if}}
-    {{#if detail.metadata.baseMetricV3.cvssV3.vectorString}}
-      <div>
+          <span
+            class="p-value"
+          >{{detail.metadata.baseMetricV3.cvssV3.baseSeverity}}</span>
+        </div>
+      {{/if}}
+      {{#if detail.metadata.baseMetricV3.cvssV3.vectorString}}
+        <div>
           <span class="p-key">Vector String: </span>
-          <span class="p-value">{{detail.metadata.baseMetricV3.cvssV3.vectorString}}</span>
-      </div>
-    {{/if}}
-    {{#if detail.metadata.baseMetricV3.cvssV3.integrityImpact}}
-      <div>
+          <span
+            class="p-value"
+          >{{detail.metadata.baseMetricV3.cvssV3.vectorString}}</span>
+        </div>
+      {{/if}}
+      {{#if detail.metadata.baseMetricV3.cvssV3.integrityImpact}}
+        <div>
           <span class="p-key">Integrity Impact: </span>
-          <span class="p-value">{{detail.metadata.baseMetricV3.cvssV3.integrityImpact}}</span>
-      </div>
-    {{/if}}
-    {{#if detail.metadata.baseMetricV3.cvssV3.userInteraction}}
-      <div>
+          <span
+            class="p-value"
+          >{{detail.metadata.baseMetricV3.cvssV3.integrityImpact}}</span>
+        </div>
+      {{/if}}
+      {{#if detail.metadata.baseMetricV3.cvssV3.userInteraction}}
+        <div>
           <span class="p-key">User Interaction: </span>
-          <span class="p-value">{{detail.metadata.baseMetricV3.cvssV3.userInteraction}}</span>
-      </div>
-    {{/if}}
-    {{#if detail.metadata.baseMetricV3.cvssV3.attackComplexity}}
-      <div>
+          <span
+            class="p-value"
+          >{{detail.metadata.baseMetricV3.cvssV3.userInteraction}}</span>
+        </div>
+      {{/if}}
+      {{#if detail.metadata.baseMetricV3.cvssV3.attackComplexity}}
+        <div>
           <span class="p-key">Complexity: </span>
-          <span class="p-value">{{detail.metadata.baseMetricV3.cvssV3.attackComplexity}}</span>
-      </div>
-    {{/if}}
-    {{#if detail.metadata.baseMetricV3.cvssV3.availabilityImpact}}
-      <div>
+          <span
+            class="p-value"
+          >{{detail.metadata.baseMetricV3.cvssV3.attackComplexity}}</span>
+        </div>
+      {{/if}}
+      {{#if detail.metadata.baseMetricV3.cvssV3.availabilityImpact}}
+        <div>
           <span class="p-key">Availability Impact: </span>
-          <span class="p-value">{{detail.metadata.baseMetricV3.cvssV3.availabilityImpact}}</span>
-      </div>
-    {{/if}}
-    {{#if detail.metadata.baseMetricV3.cvssV3.privilegesRequired}}
-      <div>
+          <span
+            class="p-value"
+          >{{detail.metadata.baseMetricV3.cvssV3.availabilityImpact}}</span>
+        </div>
+      {{/if}}
+      {{#if detail.metadata.baseMetricV3.cvssV3.privilegesRequired}}
+        <div>
           <span class="p-key">Privileges Required: </span>
-          <span class="p-value">{{detail.metadata.baseMetricV3.cvssV3.privilegesRequired}}</span>
-      </div>
-    {{/if}}
-    {{#if detail.metadata.baseMetricV3.cvssV3.confidentialityImpact}}
-      <div>
+          <span
+            class="p-value"
+          >{{detail.metadata.baseMetricV3.cvssV3.privilegesRequired}}</span>
+        </div>
+      {{/if}}
+      {{#if detail.metadata.baseMetricV3.cvssV3.confidentialityImpact}}
+        <div>
           <span class="p-key">Confidentiality Impact: </span>
-          <span class="p-value">{{detail.metadata.baseMetricV3.cvssV3.confidentialityImpact}}</span>
-      </div>
-    {{/if}}
-    {{#if detail.metadata.credits.module}}
-      <h1 class="p-title">{{fa-icon "shield-alt" fixedWidth=true}}Metasploit Modules: </h1>
-      {{#each detail.metadata.credits.module as |module|}}
-        <span class="p-value"><a href="https://www.rapid7.com/db/modules/{{module}}">{{module}} {{fa-icon "external-link-square" class="external-link-icon"}}</a></span>
-      {{/each}}
-    {{/if}}
-    {{#if (gt (inc detail.metadata.references.length) 2)}}
-      <h1 class="p-title">{{fa-icon "browser" fixedWidth=true}}References: </h1>
+          <span
+            class="p-value"
+          >{{detail.metadata.baseMetricV3.cvssV3.confidentialityImpact}}</span>
+        </div>
+      {{/if}}
+      {{#if detail.metadata.credits.module}}
+        <h1 class="p-title">{{fa-icon "shield-alt" fixedWidth=true}}Metasploit Modules:
+        </h1>
+        {{#each detail.metadata.credits.module as |module|}}
+          <span class="p-value"><a
+              href="https://www.rapid7.com/db/modules/{{module}}"
+            >{{module}}
+              {{fa-icon "external-link-square" class="external-link-icon"}}</a></span>
+        {{/each}}
+      {{/if}}
+      {{#if (gt (inc detail.metadata.references.length) 2)}}
+        <h1 class="p-title">{{fa-icon "browser" fixedWidth=true}}References: </h1>
         <div>
           {{#each detail.metadata.references as |ref index|}}
             {{#if (gt (inc index) 1)}}
-              <span class="p-value"><a href="{{ref}}">{{ref}} {{fa-icon "external-link-square" class="external-link-icon"}}</a></span><br>
+              <span class="p-value"><a href="{{ref}}">{{ref}}
+                  {{fa-icon
+                    "external-link-square"
+                    class="external-link-icon"
+                  }}</a></span><br />
             {{/if}}
           {{/each}}
         </div>
-    {{/if}}
-  {{/each}}
+      {{/if}}
+    {{/each}}
+  {{/if}}
 {{/if}}
