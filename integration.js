@@ -1,11 +1,9 @@
 'use strict';
-
 const request = require('request');
 const Bottleneck = require('bottleneck/es5');
 const _ = require('lodash');
 const config = require('./config/config');
 const fs = require('fs');
-
 let Logger;
 let requestWithDefaults;
 let limiter = null;
@@ -13,40 +11,32 @@ let limiter = null;
 function startup(logger) {
   let defaults = {};
   Logger = logger;
-  
   const { cert, key, passphrase, ca, proxy, rejectUnauthorized } = config.request;
-
   if (typeof cert === 'string' && cert.length > 0) {
     defaults.cert = fs.readFileSync(cert);
   }
-
   if (typeof key === 'string' && key.length > 0) {
     defaults.key = fs.readFileSync(key);
   }
-
   if (typeof passphrase === 'string' && passphrase.length > 0) {
     defaults.passphrase = passphrase;
   }
-
   if (typeof ca === 'string' && ca.length > 0) {
     defaults.ca = fs.readFileSync(ca);
   }
-
   if (typeof proxy === 'string' && proxy.length > 0) {
     defaults.proxy = proxy;
   }
-
   if (typeof rejectUnauthorized === 'boolean') {
     defaults.rejectUnauthorized = rejectUnauthorized;
   }
-
   requestWithDefaults = request.defaults(defaults);
 }
 
 function _setupLimiter(options) {
   limiter = new Bottleneck({
     maxConcurrent: Number.parseInt(options.maxConcurrent, 10), // no more than 5 lookups can be running at single time
-    highWater: 50, // no more than 50 lookups can be queued up
+    highWater: 100, // no more than 100 lookups can be queued up
     strategy: Bottleneck.strategy.OVERFLOW,
     minTime: Number.parseInt(options.minTime, 10) // don't run lookups faster than 1 every 200 ms
   });
@@ -61,7 +51,6 @@ function _lookupEntity(entity, options, cb) {
     },
     json: true
   };
-
   if (options.publicOnly === true) {
     requestOptions.qs = {
       name: entity.value,
@@ -81,17 +70,50 @@ function _lookupEntity(entity, options, cb) {
 
   Logger.trace({ requestOptions }, 'Request Options');
 
-  requestWithDefaults(requestOptions, function (error, res, body) {
-    let processedResult = handleRestError(error, entity, res, body);
-
-    if (processedResult.error) {
-      cb(processedResult);
-      return;
+  requestWithDefaults(requestOptions, function (err, res, body) {
+    const errorMsg = res.body && res.body.message;
+    if (res.statusCode && res.statusCode === 404) return cb(null, { entity, data: null });
+    if (res.statusCode === 401 || res.statusCode === 403) {
+      return cb(null, {
+        entity,
+        isVolatile: true,
+        data: {
+          summary: ['! Search Returned Error'],
+          details: {
+            errorMessage: errorMsg,
+            allowRetry: res.statusCode !== 401
+          }
+        }
+      });
     }
-
-    cb(null, processedResult);
-    return;
+    if (err) {
+      Logger.error(err, 'Request Error');
+      cb({
+        detail: 'Unexpected Error',
+        err,
+        data
+      });
+    }
+    cb(null, {
+      entity,
+      data: {
+        summary: getSummary(res),
+        details: res.body.data
+      }
+    });
   });
+}
+
+function getSummary(res) {
+  let tags = [];
+  const { data } = res.body;
+  // ask about this in review, summary not rendering in overlay
+  for (const block of data) {
+    tags.push(`Attacker Value Score: ${block.score.attackerValue}`);
+    tags.push(`Exploitability Score: ${block.score.exploitability}`);
+    tags.push(`Name: ${block.name}`);
+  }
+  return tags;
 }
 
 function doLookup(entities, options, cb) {
@@ -104,31 +126,30 @@ function doLookup(entities, options, cb) {
 
   if (!limiter) _setupLimiter(options);
 
-  _setupLimiter(options);
-
   entities.forEach((entity) => {
     hasValidIndicator = true;
     limiter.submit(_lookupEntity, entity, options, (err, result) => {
       const maxRequestQueueLimitHit =
         (_.isEmpty(err) && _.isEmpty(result)) ||
         (err && err.message === 'This job has been dropped by Bottleneck');
-
-      const isConnectionReset =
-        _.get(err, 'errors[0].meta.err.code', '') === 'ECONNRESET';
-
-      if (maxRequestQueueLimitHit || isConnectionReset) {
+      const statusCode = _.get(err, 'err.statusCode', '');
+      const isGatewayTimeout = statusCode === 502 || statusCode === 504;
+      const isConnectionReset = _.get(err, 'err.error.code', '') === 'ECONNRESET';
+      if (maxRequestQueueLimitHit || isConnectionReset || isGatewayTimeout) {
         // Tracking for logging purposes
         if (isConnectionReset) numConnectionResets++;
         if (maxRequestQueueLimitHit) numThrottled++;
 
         lookupResults.push({
           entity,
-          isVolatile: true, // prevent limit reached results from being cached
+          isVolatile: true,
           data: {
             summary: ['Lookup limit reached'],
             details: {
               maxRequestQueueLimitHit,
-              isConnectionReset
+              isConnectionReset,
+              errorMessage:
+                'The search failed due to the API search limit. You can retry your search by pressing the "Retry Search" button.'
             }
           }
         });
@@ -140,7 +161,7 @@ function doLookup(entities, options, cb) {
 
       if (lookupResults.length + errors.length === entities.length) {
         if (numConnectionResets > 0 || numThrottled > 0) {
-          log.warn(
+          Logger.warn(
             {
               numEntitiesLookedUp: entities.length,
               numConnectionResets: numConnectionResets,
@@ -153,7 +174,6 @@ function doLookup(entities, options, cb) {
         if (errors.length > 0) {
           cb(errors);
         } else {
-          // I can log the results before the callback is called.
           cb(null, lookupResults);
         }
       }
@@ -164,57 +184,24 @@ function doLookup(entities, options, cb) {
     cb(null, []);
   }
 }
-
-function handleRestError(error, entity, res, body) {
-  let result;
-
-  if (error) {
-    return {
-      error: error,
-      detail: 'HTTP Request Error'
-    };
+function onMessage(payload, options, callback) {
+  switch (payload.action) {
+    case 'RETRY_LOOKUP':
+      doLookup([payload.entity], options, (err, lookupResults) => {
+        if (err) {
+          Logger.error({ err }, 'Error retrying lookup');
+          callback(err);
+        } else {
+          callback(
+            null,
+            lookupResults && lookupResults[0] && lookupResults[0].data === null
+              ? { data: { summary: ['No Results Found on Retry'] } }
+              : lookupResults[0]
+          );
+        }
+      });
+      break;
   }
-
-  if (res.statusCode === 200) {
-    // we got data!
-    result = {
-      entity: entity,
-      body: body
-    };
-  } else if (res.statusCode === 400) {
-    result = {
-      error: 'Bad Request',
-      detail: body.query_status
-    };
-  } else if (res.statusCode === 401) {
-    result = {
-      error: 'Unauthorized',
-      detail: body.query_status
-    };
-  } else if (res.statusCode === 404) {
-    result = {
-      error: 'Not Found',
-      detail: body.query_status
-    };
-  } else if (res.statusCode === 429) {
-    result = {
-      error: 'Rate Limit Exceeded',
-      detail: body.query_status
-    };
-  } else if (res.statusCode === 500) {
-    result = {
-      error: 'Failed to retrieve topics',
-      detail: body.query_status
-    };
-  } else {
-    result = {
-      error: 'Unexpected Error',
-      statusCode: res ? res.statusCode : 'Unknown',
-      detail: 'An unexpected error occurred'
-    };
-  }
-
-  return result;
 }
 
 function validateOption(errors, options, optionName, errMessage) {
@@ -232,14 +219,13 @@ function validateOption(errors, options, optionName, errMessage) {
 
 function validateOptions(options, callback) {
   let errors = [];
-
   validateOption(errors, options, 'apiKey', 'You must provide a valid API Key.');
-
   callback(null, errors);
 }
 
 module.exports = {
   doLookup: doLookup,
+  onMessage: onMessage,
   validateOptions: validateOptions,
   startup: startup
 };
