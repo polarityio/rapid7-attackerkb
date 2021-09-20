@@ -1,14 +1,14 @@
 'use strict';
 
 const request = require('request');
-const Bottleneck = require('bottleneck/es5');
-const _ = require('lodash');
 const config = require('./config/config');
+const async = require('async');
 const fs = require('fs');
 
 let Logger;
 let requestWithDefaults;
-let limiter = null;
+
+const MAX_PARALLEL_LOOKUPS = 10;
 
 function startup(logger) {
   let defaults = {};
@@ -43,185 +43,139 @@ function startup(logger) {
   requestWithDefaults = request.defaults(defaults);
 }
 
-function _setupLimiter(options) {
-  limiter = new Bottleneck({
-    maxConcurrent: Number.parseInt(options.maxConcurrent, 10), // no more than 5 lookups can be running at single time
-    highWater: 100, // no more than 100 lookups can be queued up
-    strategy: Bottleneck.strategy.OVERFLOW,
-    minTime: Number.parseInt(options.minTime, 10) // don't run lookups faster than 1 every 200 ms
-  });
-}
+function doLookup(entities, options, cb) {
+  let lookupResults = [];
+  let tasks = [];
 
-function _lookupEntity(entity, options, cb) {
-  let requestOptions = {
-    method: 'GET',
-    uri: `https://api.attackerkb.com/v1/topics`,
-    headers: {
-      Authorization: 'basic ' + options.apiKey
-    },
-    json: true
-  };
-
-  if (options.publicOnly === true) {
-    requestOptions.qs = {
-      name: entity.value,
-      size: options.resultCount,
-      sort: 'revisionDate:desc',
-      metadata: 'PUBLIC'
+  Logger.debug(entities);
+  entities.forEach((entity) => {
+    let requestOptions = {
+      method: 'GET',
+      uri: `https://api.attackerkb.com/v1/topics`,
+      headers: {
+        Authorization: 'basic ' + options.apiKey
+      },
+      json: true
     };
-  } else if (options.publicOnly === false) {
-    requestOptions.qs = {
-      name: entity.value,
-      size: options.resultCount,
-      sort: 'revisionDate:desc'
-    };
-  } else {
-    return;
-  }
 
-  Logger.trace({ requestOptions }, 'Request Options');
+    if (options.publicOnly === true) {
+      requestOptions.qs = {
+        name: entity.value,
+        size: options.resultCount,
+        sort: 'revisionDate:desc',
+        metadata: 'PUBLIC'
+      };
+    } else if (options.publicOnly === false) {
+      requestOptions.qs = {
+        name: entity.value,
+        size: options.resultCount,
+        sort: 'revisionDate:desc'
+      };
+    } else {
+      return;
+    }
 
-  requestWithDefaults(requestOptions, function (err, res, body) {
-    const errorMsg = res.body && res.body.message;
+    Logger.trace({ requestOptions }, 'Request Options');
 
-    if (res.statusCode && res.statusCode === 404) return cb(null, { entity, data: null });
+    tasks.push(function (done) {
+      requestWithDefaults(requestOptions, function (error, res, body) {
+        let processedResult = handleRestError(error, entity, res, body);
 
-    if (res.statusCode === 401 || res.statusCode === 403) {
-      return cb(null, {
-        entity,
-        isVolatile: true,
-        data: {
-          summary: ['! Search Returned Error'],
-          details: {
-            errorMessage: errorMsg,
-            allowRetry: res.statusCode !== 401
-          }
+        if (processedResult.error) {
+          done(processedResult);
+          return;
         }
-      });
-    }
 
-    if (err) {
-      Logger.error(err, 'Request Error');
-      cb({
-        detail: 'Unexpected Error',
-        err,
-        data
+        done(null, processedResult);
       });
-    }
-
-    cb(null, {
-      entity,
-      data: {
-        summary: getSummary(res),
-        details: res.body.data
-      }
     });
   });
-}
 
-function getSummary(res) {
-  let tags = [];
-  const { data } = res.body;
-  // ask about this in review, summary not rendering in overlay
-  for (const block of data) {
-    tags.push(`Attacker Value Score: ${block.score.attackerValue}`);
-    tags.push(`Exploitability Score: ${block.score.exploitability}`);
-    tags.push(`Name: ${block.name}`);
-  }
-  return tags;
-}
+  async.parallelLimit(tasks, MAX_PARALLEL_LOOKUPS, (err, results) => {
+    if (err) {
+      Logger.error({ err: err }, 'Error');
+      cb(err);
+      return;
+    }
 
-function doLookup(entities, options, cb) {
-  const lookupResults = [];
-  const errors = [];
-  let numConnectionResets = 0;
-  let numThrottled = 0;
-  let hasValidIndicator = false;
-  Logger.debug(entities);
-
-  if (!limiter) _setupLimiter(options);
-
-  _setupLimiter(options);
-
-  entities.forEach((entity) => {
-    hasValidIndicator = true;
-    limiter.submit(_lookupEntity, entity, options, (err, result) => {
-      const maxRequestQueueLimitHit =
-        (_.isEmpty(err) && _.isEmpty(result)) ||
-        (err && err.message === 'This job has been dropped by Bottleneck');
-
-      const statusCode = _.get(err, 'err.statusCode', '');
-      const isGatewayTimeout = statusCode === 502 || statusCode === 504;
-      const isConnectionReset = _.get(err, 'err.error.code', '') === 'ECONNRESET';
-
-      if (maxRequestQueueLimitHit || isConnectionReset || isGatewayTimeout) {
-        // Tracking for logging purposes
-        if (isConnectionReset) numConnectionResets++;
-        if (maxRequestQueueLimitHit) numThrottled++;
-
+    results.forEach((result) => {
+      if (
+        !result ||
+        result.body === null ||
+        result.body.length === 0 ||
+        result.body.data === null ||
+        result.body.data.length === 0
+      ) {
         lookupResults.push({
-          entity,
-          isVolatile: true,
+          entity: result.entity,
+          data: null
+        });
+      } else {
+        lookupResults.push({
+          entity: result.entity,
           data: {
-            summary: ['Lookup limit reached'],
-            details: {
-              maxRequestQueueLimitHit,
-              isConnectionReset,
-              errorMessage:
-                'The search failed due to the API search limit. You can retry your search by pressing the "Retry Search" button.'
-            }
+            summary: [],
+            details: result.body
           }
         });
-      } else if (err) {
-        errors.push(err);
-      } else {
-        lookupResults.push(result);
-      }
-
-      if (lookupResults.length + errors.length === entities.length) {
-        if (numConnectionResets > 0 || numThrottled > 0) {
-          Logger.warn(
-            {
-              numEntitiesLookedUp: entities.length,
-              numConnectionResets: numConnectionResets,
-              numLookupsThrottled: numThrottled
-            },
-            'Lookup Limit Error'
-          );
-        }
-        // we got all our results
-        if (errors.length > 0) {
-          cb(errors);
-        } else {
-          cb(null, lookupResults);
-        }
       }
     });
-  });
 
-  if (!hasValidIndicator) {
-    cb(null, []);
-  }
+    Logger.debug({ lookupResults }, 'Results');
+    cb(null, lookupResults);
+  });
 }
 
-function onMessage(payload, options, callback) {
-  switch (payload.action) {
-    case 'RETRY_LOOKUP':
-      doLookup([payload.entity], options, (err, lookupResults) => {
-        if (err) {
-          Logger.error({ err }, 'Error retrying lookup');
-          callback(err);
-        } else {
-          callback(
-            null,
-            lookupResults && lookupResults[0] && lookupResults[0].data === null
-              ? { data: { summary: ['No Results Found on Retry'] } }
-              : lookupResults[0]
-          );
-        }
-      });
-      break;
+function handleRestError(error, entity, res, body) {
+  let result;
+
+  if (error) {
+    return {
+      error: error,
+      detail: 'HTTP Request Error'
+    };
   }
+
+  if (res.statusCode === 200) {
+    // we got data!
+    result = {
+      entity: entity,
+      body: body
+    };
+  } else if (res.statusCode === 400) {
+    result = {
+      error: 'Bad Request',
+      detail: body.query_status
+    };
+  } else if (res.statusCode === 401) {
+    result = {
+      error: 'Unauthorized',
+      detail: body.query_status
+    };
+  } else if (res.statusCode === 404) {
+    result = {
+      error: 'Not Found',
+      detail: body.query_status
+    };
+  } else if (res.statusCode === 429) {
+    result = {
+      error: 'Rate Limit Exceeded',
+      detail: body.query_status
+    };
+  } else if (res.statusCode === 500) {
+    result = {
+      error: 'Failed to retrieve topics',
+      detail: body.query_status
+    };
+  } else {
+    result = {
+      error: 'Unexpected Error',
+      statusCode: res ? res.statusCode : 'Unknown',
+      detail: 'An unexpected error occurred'
+    };
+  }
+
+  return result;
 }
 
 function validateOption(errors, options, optionName, errMessage) {
@@ -247,7 +201,6 @@ function validateOptions(options, callback) {
 
 module.exports = {
   doLookup: doLookup,
-  onMessage: onMessage,
   validateOptions: validateOptions,
   startup: startup
 };
