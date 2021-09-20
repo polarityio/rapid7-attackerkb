@@ -1,7 +1,7 @@
 {
   "main": "./integration.js",
   "name": "AttackerKB",
-  "version": "3.0.0-beta",
+  "version": "3.1.0-beta",
   "private": true,
   "dependencies": {
     "async": "^2.6",
