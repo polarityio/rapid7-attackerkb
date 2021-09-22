@@ -103,7 +103,7 @@ module.exports = {
       key: 'publicOnly',
       name: 'Only Show Publicly Disclosed Vulnerabilities',
       description:
-        'If checked, only vulnerabilites with a current state of PUBLIC will be returned.',
+        'If checked, only vulnerabilities with a current state of PUBLIC will be returned.',
       default: true,
       type: 'boolean',
       userCanEdit: true,
