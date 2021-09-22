@@ -71,48 +71,63 @@ function _lookupEntity(entity, options, cb) {
   Logger.trace({ requestOptions }, 'Request Options');
 
   requestWithDefaults(requestOptions, function (err, res, body) {
-    const errorMsg = res.body && res.body.message;
-    if (res.statusCode && res.statusCode === 404) return cb(null, { entity, data: null });
-    if (res.statusCode === 401 || res.statusCode === 403) {
+    if (err) {
+      Logger.error(err, 'Request Error');
+      return cb({
+        detail: 'Unexpected HTTP error',
+        error: err
+      });
+    }
+
+    if (res && res.statusCode === 200) {
+      return cb(null, {
+        entity,
+        data: {
+          summary: getSummary(res),
+          details: res.body.data
+        }
+      });
+    }
+
+    if (res && res.statusCode && res.statusCode === 404) {
+      return cb(null, { entity, data: null });
+    }
+
+    const errorMsg = res && res.body && res.body.message;
+
+    if ((res && res.statusCode === 401) || (res && res.statusCode === 403)) {
       return cb(null, {
         entity,
         isVolatile: true,
         data: {
-          summary: ['! Search Returned Error'],
+          summary: ['! Invalid API Key'],
           details: {
             errorMessage: errorMsg,
-            allowRetry: res.statusCode !== 401
+            allowRetry: false
           }
         }
       });
     }
-    if (err) {
-      Logger.error(err, 'Request Error');
-      cb({
-        detail: 'Unexpected Error',
-        err,
-        data
-      });
-    }
-    cb(null, {
-      entity,
-      data: {
-        summary: getSummary(res),
-        details: res.body.data
-      }
+
+    cb({
+      statusCode: res.statusCode,
+      detail: errorMsg ? errorMsg : `Unexpected ${res.statusCode} status code received`
     });
   });
 }
 
 function getSummary(res) {
   let tags = [];
-  const { data } = res.body;
-  // ask about this in review, summary not rendering in overlay
-  for (const block of data) {
-    tags.push(`Attacker Value Score: ${block.score.attackerValue}`);
-    tags.push(`Exploitability Score: ${block.score.exploitability}`);
-    tags.push(`Name: ${block.name}`);
+  if (res && res.body) {
+    const { data } = res.body;
+    // ask about this in review, summary not rendering in overlay
+    for (const block of data) {
+      tags.push(`Attacker Value Score: ${block.score.attackerValue}`);
+      tags.push(`Exploitability Score: ${block.score.exploitability}`);
+      tags.push(`Name: ${block.name}`);
+    }
   }
+  Logger.trace({ TAGS: tags });
   return tags;
 }
 
@@ -130,11 +145,14 @@ function doLookup(entities, options, cb) {
     hasValidIndicator = true;
     limiter.submit(_lookupEntity, entity, options, (err, result) => {
       const maxRequestQueueLimitHit =
-        (_.isEmpty(err) && _.isEmpty(result)) ||
-        (err && err.message === 'This job has been dropped by Bottleneck');
-      const statusCode = _.get(err, 'err.statusCode', '');
+        (result && result.message) || (_.isEmpty(err) && _.isEmpty(result))
+          ? true
+          : false;
+
+      const statusCode = _.get(err, 'statusCode', '');
       const isGatewayTimeout = statusCode === 502 || statusCode === 504;
-      const isConnectionReset = _.get(err, 'err.error.code', '') === 'ECONNRESET';
+      const isConnectionReset = _.get(err, 'error.code', '') === 'ECONNRESET';
+
       if (maxRequestQueueLimitHit || isConnectionReset || isGatewayTimeout) {
         // Tracking for logging purposes
         if (isConnectionReset) numConnectionResets++;
@@ -144,10 +162,11 @@ function doLookup(entities, options, cb) {
           entity,
           isVolatile: true,
           data: {
-            summary: ['Lookup limit reached'],
+            summary: ['! Lookup limit reached'],
             details: {
               maxRequestQueueLimitHit,
               isConnectionReset,
+              isGatewayTimeout,
               errorMessage:
                 'The search failed due to the API search limit. You can retry your search by pressing the "Retry Search" button.'
             }
@@ -174,6 +193,7 @@ function doLookup(entities, options, cb) {
         if (errors.length > 0) {
           cb(errors);
         } else {
+          Logger.trace({ lookupResults }, 'lookup Results');
           cb(null, lookupResults);
         }
       }
