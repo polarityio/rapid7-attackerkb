@@ -1,5 +1,4 @@
-{{#if details.data}}
-  {{#each details.data as |detail index|}}
+{{#each details as |detail index|}}
   {{#if (gte detail.score.attackerValue 4.5)}}
     <div>
       <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
@@ -112,5 +111,4 @@
       </span>
     </div>
   {{/if}}
-  {{/each}}
-{{/if}}
+{{/each}}
