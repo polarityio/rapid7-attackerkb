@@ -52,7 +52,7 @@
         <div>
           <span class="p-key">Attacker Value: </span>
           {{fa-icon "signal" fixedWidth=true}}
-          <span class="p-value" style="color:purple"><b>VERY HIGH</b></span>
+          <span class="p-red"><b>VERY HIGH</b></span> ({{detail.score.attackerValue}})
         </div>
       {{/if}}
       {{#if (gte detail.score.attackerValue 3.5)}}
@@ -60,7 +60,7 @@
           <div>
             <span class="p-key">Attacker Value: </span>
             {{fa-icon "signal-4" fixedWidth=true}}
-            <span class="p-value" style="color:red"><b>HIGH</b></span>
+            <span class="p-red"><b>HIGH</b></span> ({{detail.score.attackerValue}})
           </div>
         {{/if}}
       {{/if}}
@@ -69,7 +69,7 @@
           <div>
             <span class="p-key">Attacker Value: </span>
             {{fa-icon "signal-3" fixedWidth=true}}
-            <span class="p-value" style="color:orange"><b>MODERATE</b></span>
+            <span class="p-orange" style="color:orange"><b>MODERATE</b></span> ({{detail.score.attackerValue}})
           </div>
         {{/if}}
       {{/if}}
@@ -78,7 +78,7 @@
           <div>
             <span class="p-key">Attacker Value: </span>
             {{fa-icon "signal-2" fixedWidth=true}}
-            <span class="p-value" style="color:yellow"><b>LOW</b></span>
+            <span class="p-yellow"><b>LOW</b></span> ({{detail.score.attackerValue}})
           </div>
         {{/if}}
       {{/if}}
@@ -87,21 +87,21 @@
           <div>
             <span class="p-key">Attacker Value: </span>
             {{fa-icon "signal-1" fixedWidth=true}}
-            <span class="p-value" style="color:green"><b>VERY LOW</b></span>
+            <span class="p-green"><b>VERY LOW</b></span> ({{detail.score.attackerValue}})
           </div>
         {{/if}}
       {{/if}}
       {{#if (eq detail.score.attackerValue 0)}}
         <div>
           <span class="p-key">Attacker Value: </span>
-          <span class="p-value" style="color:black"><b>UNKNOWN</b></span>
+          <span class="p-value"><b>UNKNOWN</b></span> ({{detail.score.attackerValue}})
         </div>
       {{/if}}
       {{#if (gte detail.score.exploitability 4.5)}}
         <div>
           <span class="p-key">Exploitability: </span>
           {{fa-icon "signal" fixedWidth=true}}
-          <span class="p-value" style="color:purple"><b>VERY HIGH</b></span>
+          <span class="p-red"><b>VERY HIGH</b></span> ({{detail.score.exploitability}})
         </div>
       {{/if}}
       {{#if (gte detail.score.exploitability 3.5)}}
@@ -109,7 +109,7 @@
           <div>
             <span class="p-key">Exploitability: </span>
             {{fa-icon "signal-4" fixedWidth=true}}
-            <span class="p-value" style="color:red"><b>HIGH</b></span>
+            <span class="p-red"><b>HIGH</b></span> ({{detail.score.exploitability}})
           </div>
         {{/if}}
       {{/if}}
@@ -118,7 +118,7 @@
           <div>
             <span class="p-key">Exploitability: </span>
             {{fa-icon "signal-3" fixedWidth=true}}
-            <span class="p-value" style="color:orange"><b>MODERATE</b></span>
+            <span class="p-orange"><b>MODERATE</b></span> ({{detail.score.exploitability}})
           </div>
         {{/if}}
       {{/if}}
@@ -127,7 +127,7 @@
           <div>
             <span class="p-key">Exploitability: </span>
             {{fa-icon "signal-2" fixedWidth=true}}
-            <span class="p-value" style="color:yellow"><b>LOW</b></span>
+            <span class="p-yellow"><b>LOW</b></span> ({{detail.score.exploitability}})
           </div>
         {{/if}}
       {{/if}}
@@ -136,14 +136,14 @@
           <div>
             <span class="p-key">Exploitability: </span>
             {{fa-icon "signal-1" fixedWidth=true}}
-            <span class="p-value" style="color:green"><b>VERY LOW</b></span>
+            <span class="p-green"><b>VERY LOW</b></span> ({{detail.score.exploitability}})
           </div>
         {{/if}}
       {{/if}}
       {{#if (eq detail.score.exploitability 0)}}
         <div>
           <span class="p-key">Exploitability: </span>
-          <span class="p-value" style="color:black"><b>UNKNOWN</b></span>
+          <span class="p-value"><b>UNKNOWN</b></span> ({{detail.score.exploitability}})
         </div>
       {{/if}}
       {{#if detail.disclosureDate}}
@@ -167,7 +167,7 @@
       {{#if detail.document}}
         <div>
           <span class="p-key">Description: </span><br />
-          <span class="p-value">{{detail.document}}</span>
+          <span class="p-value p-block">{{detail.document}}</span>
         </div>
       {{/if}}
       {{#if detail.metadata.vendor.vendorNames}}
