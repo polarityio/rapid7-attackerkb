@@ -24,8 +24,7 @@
         <span class="p-footnote">Use the link to run this search via the AttackerKB website.</span>
     </div>
   </div>
-{{else}}
-  {{#if block.data}}
+{{else if block.data.details}}
     <div>
       <span class="p-title">{{fa-icon "edit" fixedWidth=true}} Topic Detail</span>
     </div>
@@ -291,5 +290,8 @@
         </div>
       {{/if}}
     {{/each}}
-  {{/if}}
+{{else}}
+    <div>
+        <span>No Results Found</span>
+    </div>
 {{/if}}

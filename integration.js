@@ -80,13 +80,20 @@ function _lookupEntity(entity, options, cb) {
     }
 
     if (res && res.statusCode === 200) {
-      return cb(null, {
-        entity,
-        data: {
-          summary: getSummary(res),
-          details: res.body.data
-        }
-      });
+      if (Array.isArray(res.body.data) && res.body.data.length > 0) {
+        return cb(null, {
+          entity,
+          data: {
+            summary: getSummary(res),
+            details: res.body.data
+          }
+        });
+      } else {
+        return cb(null, {
+          entity,
+          data: null
+        });
+      }
     }
 
     if (res && res.statusCode && res.statusCode === 404) {
@@ -139,7 +146,7 @@ function doLookup(entities, options, cb) {
   let numThrottled = 0;
   let numGatewayTimeouts = 0;
   let hasValidIndicator = false;
-  Logger.debug(entities);
+  Logger.trace({ entities }, 'doLookup');
 
   if (!limiter) _setupLimiter(options);
 
@@ -152,7 +159,8 @@ function doLookup(entities, options, cb) {
           : false;
 
       const statusCode = _.get(err, 'statusCode', '');
-      const isGatewayTimeout = statusCode === 502 || statusCode === 504 || statusCode === 500;
+      const isGatewayTimeout =
+        statusCode === 502 || statusCode === 504 || statusCode === 500;
       const isConnectionReset = _.get(err, 'error.code', '') === 'ECONNRESET';
 
       if (maxRequestQueueLimitHit || isConnectionReset || isGatewayTimeout) {
@@ -208,6 +216,7 @@ function doLookup(entities, options, cb) {
     cb(null, []);
   }
 }
+
 function onMessage(payload, options, callback) {
   switch (payload.action) {
     case 'RETRY_LOOKUP':
