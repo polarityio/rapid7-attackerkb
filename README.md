@@ -18,9 +18,9 @@ https://auth.attackerkb.com/auth/github/login
 
 The maximum number of API search results that will be displayed in the Polarity Overlay window. (Default: 5)
 
-### Only Search Publicly known CVE's
+### Only Search Publicly known CVEs
 
-If checked, Polarity will only search for publically known CVE's.
+If checked, Polarity will only search for publicly known CVEs.
 
 ### Max Concurrent Search Requests
 
