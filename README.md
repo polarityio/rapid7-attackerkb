@@ -2,8 +2,6 @@
 
 ![mode:on demand only](https://img.shields.io/badge/mode-on%20demand%20only-blue.svg)
 
-> This integration should only be run in `On Demand Only` mode
-
 AttackerKB provides a forum for the security community to share insights and views that might otherwise get lost in all the hype and chaos, or dismissed as merely anecdotal.  The Polarity AttackerKB integration allows for CVEs on the analyst screen to be queried against the "Topic" API.
 
 Check out the integration below: 
@@ -17,10 +15,20 @@ Generate an AttackerKB API Key for free with your GitHub account at the followin
 https://auth.attackerkb.com/auth/github/login
 
 ### Number of Results
+
 The maximum number of API search results that will be displayed in the Polarity Overlay window. (Default: 5)
 
-### Only Search Publicly known CVE's
-If checked, Polarity will only search for publically known CVE's.
+### Only Search Publicly known CVEs
+
+If checked, Polarity will only search for publicly known CVEs.
+
+### Max Concurrent Search Requests
+
+Maximum number of concurrent search requests (defaults to 20). Integration must be restarted after changing this option.
+
+### Minimum Time Between Searches
+
+Minimum amount of time in milliseconds between each entity search (defaults to 100). Integration must be restarted after changing this option.
 
 ## Installation Instructions
 

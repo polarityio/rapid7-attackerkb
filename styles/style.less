@@ -1,9 +1,25 @@
-pre{
+pre {
   overflow-y: scroll;
   overflow-x: hidden;
   max-height: 200px;
+  margin: 3px 0px;
+  white-space: pre-wrap;
+}
+
+.p-block{
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.retry-btn {
+  height: 25px;
   padding: 5px;
-  margin-top: 5px;
+  width: 125px;
+  font-weight: 500;
+}
+
+.alert {
+  margin-bottom: 0;
 }
 
 .source-tag {
@@ -15,68 +31,22 @@ pre{
   display: inline-block;
   font-weight: normal;
 }
-.nav-tabs {
-  margin-top: 20px;
-}
-
-.description-container {
-  margin-top: 5px;
-  border-bottom: none;
-  padding-bottom: 10px;
-  textarea {
-    width: 100%;
-  }
-}
 
 div.references{
   padding: 2px 3px;
   word-break: break-all;
 }
 
-table, table.p-table {
-  padding: 5px;
-  font-weight: 400;
-  font-size: 12px;
-  text-align: left;
-  width: 100%;
-  word-break: break-all;
-
-  thead {
-    th {
-      color: #000;
-      font-weight: 600;
-      padding: 5px;
-    }
-  }
-
-  tbody {
-    tr:nth-child(odd) {
-      background-color: #f7f7f7;
-    }
-
-    text-transform: lowercase;
-  }
-
-  td {
-    padding: 5px;
-  }
-}
-
-.additional-rows{
-  width: 100%;
-  text-align: right;
-  font-size: 11px;
-  margin-top: 5px;
-  color: #9a9a9a;
-}
-
-.polarityMetadata{
-  padding-bottom: 5px;
-}
-.polarityMeta{
-  padding-top: 5px;
-}
-
 li {
   padding-left: 10px;
+}
+
+.external-link-icon{
+  font-size: 9px;
+  margin-bottom: 1px;
+}
+
+.summary-tag-icon{
+  color: rgba(0,0,0,.4);
+  margin-bottom: 0.5px;
 }
