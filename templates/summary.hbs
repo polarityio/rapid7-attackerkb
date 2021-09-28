@@ -1,114 +1,136 @@
-{{#each details as |detail index|}}
-  {{#if (gte detail.score.attackerValue 4.5)}}
-    <div>
+{{#if (or details.isConnectionReset details.maxRequestQueueLimitHit details.isGatewayTimeout details.summaryTag)}}
+    <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
+        <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
+        <span class="integration-text-color">
+            {{fa-icon icon="exclamation-circle" fixedWidth=true class="summary-tag-icon"}}
+            {{#if details.summaryTag}}
+                {{details.summaryTag}}
+            {{else}}
+                Search Limit Reached
+            {{/if}}
+        </span>
+    </span>
+{{!-- on a manual lookup retry we could get back an empty result so we check for it here --}}
+{{else if details}}
+    {{#each details as |detail index|}}
+        {{#if (gte detail.score.attackerValue 4.5)}}
+            <div>
       <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
         <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
         <span class="integration-text-color">Attacker Value: VERY HIGH</span>
       </span>
-    </div>
-  {{/if}}
-  {{#if (gte detail.score.attackerValue 3.5)}}
-    {{#if (lt detail.score.attackerValue 4.5)}}
-      <div>
+            </div>
+        {{/if}}
+        {{#if (gte detail.score.attackerValue 3.5)}}
+            {{#if (lt detail.score.attackerValue 4.5)}}
+                <div>
         <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
           <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
           <span class="integration-text-color">Attacker Value: HIGH</span>
         </span>
-      </div>
-    {{/if}}
-  {{/if}}
-  {{#if (gte detail.score.attackerValue 2.5)}}
-    {{#if (lt detail.score.attackerValue 3.5)}}
-      <div>
+                </div>
+            {{/if}}
+        {{/if}}
+        {{#if (gte detail.score.attackerValue 2.5)}}
+            {{#if (lt detail.score.attackerValue 3.5)}}
+                <div>
         <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
           <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
           <span class="integration-text-color">Attacker Value: MODERATE</span>
         </span>
-      </div>
-    {{/if}}
-  {{/if}}
-  {{#if (gte detail.score.attackerValue 1.5)}}
-    {{#if (lt detail.score.attackerValue 2.5)}}
-      <div>
+                </div>
+            {{/if}}
+        {{/if}}
+        {{#if (gte detail.score.attackerValue 1.5)}}
+            {{#if (lt detail.score.attackerValue 2.5)}}
+                <div>
         <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
           <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
           <span class="integration-text-color">Attacker Value: LOW</span>
         </span>
-      </div>
-    {{/if}}
-  {{/if}}
-  {{#if (gt detail.score.attackerValue 0)}}
-    {{#if (lt detail.score.attackerValue 1.5)}}
-      <div>
+                </div>
+            {{/if}}
+        {{/if}}
+        {{#if (gt detail.score.attackerValue 0)}}
+            {{#if (lt detail.score.attackerValue 1.5)}}
+                <div>
         <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
           <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
           <span class="integration-text-color">Attacker Value: VERY LOW</span>
         </span>
-      </div>
-    {{/if}}
-  {{/if}}
-  {{#if (eq detail.score.attackerValue 0)}}
-    <div>
+                </div>
+            {{/if}}
+        {{/if}}
+        {{#if (eq detail.score.attackerValue 0)}}
+            <div>
       <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
         <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
         <span class="integration-text-color">Attacker Value: UNKNOWN</span>
       </span>
-    </div>
-  {{/if}}
-  {{#if (gte detail.score.exploitability 4.5)}}
-    <div>
+            </div>
+        {{/if}}
+        {{#if (gte detail.score.exploitability 4.5)}}
+            <div>
       <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
         <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
         <span class="integration-text-color">Exploitability: VERY HIGH</span>
       </span>
-    </div>
-  {{/if}}
-  {{#if (gte detail.score.exploitability 3.5)}}
-    {{#if (lt detail.score.exploitability 4.5)}}
-    <div>
+            </div>
+        {{/if}}
+        {{#if (gte detail.score.exploitability 3.5)}}
+            {{#if (lt detail.score.exploitability 4.5)}}
+                <div>
       <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
         <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
         <span class="integration-text-color">Exploitability: HIGH</span>
       </span>
-    </div>
-    {{/if}}
-  {{/if}}
-  {{#if (gte detail.score.exploitability 2.5)}}
-    {{#if (lt detail.score.exploitability 3.5)}}
-    <div>
+                </div>
+            {{/if}}
+        {{/if}}
+        {{#if (gte detail.score.exploitability 2.5)}}
+            {{#if (lt detail.score.exploitability 3.5)}}
+                <div>
       <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
         <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
         <span class="integration-text-color">Exploitability: MODERATE</span>
       </span>
-    </div>
-    {{/if}}
-  {{/if}}
-  {{#if (gte detail.score.exploitability 1.5)}}
-    {{#if (lt detail.score.exploitability 2.5)}}
-    <div>
+                </div>
+            {{/if}}
+        {{/if}}
+        {{#if (gte detail.score.exploitability 1.5)}}
+            {{#if (lt detail.score.exploitability 2.5)}}
+                <div>
       <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
         <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
         <span class="integration-text-color">Exploitability: LOW</span>
       </span>
-    </div>
-    {{/if}}
-  {{/if}}
-  {{#if (gt detail.score.exploitability 0)}}
-    {{#if (lt detail.score.exploitability 1.5)}}
-    <div>
+                </div>
+            {{/if}}
+        {{/if}}
+        {{#if (gt detail.score.exploitability 0)}}
+            {{#if (lt detail.score.exploitability 1.5)}}
+                <div>
       <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
         <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
         <span class="integration-text-color">Exploitability: VERY LOW</span>
       </span>
-    </div>
-    {{/if}}
-  {{/if}}
-  {{#if (eq detail.score.exploitability 0)}}
-    <div>
+                </div>
+            {{/if}}
+        {{/if}}
+        {{#if (eq detail.score.exploitability 0)}}
+            <div>
       <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
         <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
         <span class="integration-text-color">Exploitability: UNKNOWN</span>
       </span>
-    </div>
-  {{/if}}
-{{/each}}
+            </div>
+        {{/if}}
+    {{/each}}
+{{else}}
+    <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
+        <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
+        <span class="integration-text-color">No Result</span>
+    </span>
+{{/if}}
+
+

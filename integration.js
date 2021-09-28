@@ -100,9 +100,10 @@ function _lookupEntity(entity, options, cb) {
         entity,
         isVolatile: true,
         data: {
-          summary: ['! Invalid API Key'],
+          summary: [' ! Invalid API Key'],
           details: {
-            errorMessage: errorMsg,
+            errorMessage: `${errorMsg} Ensure you are using a valid API key.`,
+            summaryTag: 'Invalid API Key',
             allowRetry: false
           }
         }
@@ -136,6 +137,7 @@ function doLookup(entities, options, cb) {
   const errors = [];
   let numConnectionResets = 0;
   let numThrottled = 0;
+  let numGatewayTimeouts = 0;
   let hasValidIndicator = false;
   Logger.debug(entities);
 
@@ -150,25 +152,26 @@ function doLookup(entities, options, cb) {
           : false;
 
       const statusCode = _.get(err, 'statusCode', '');
-      const isGatewayTimeout = statusCode === 502 || statusCode === 504;
+      const isGatewayTimeout = statusCode === 502 || statusCode === 504 || statusCode === 500;
       const isConnectionReset = _.get(err, 'error.code', '') === 'ECONNRESET';
 
       if (maxRequestQueueLimitHit || isConnectionReset || isGatewayTimeout) {
         // Tracking for logging purposes
         if (isConnectionReset) numConnectionResets++;
         if (maxRequestQueueLimitHit) numThrottled++;
+        if (isGatewayTimeout) numGatewayTimeouts++;
 
         lookupResults.push({
           entity,
           isVolatile: true,
           data: {
-            summary: ['! Lookup limit reached'],
+            summary: ['! Search limit reached'],
             details: {
               maxRequestQueueLimitHit,
               isConnectionReset,
               isGatewayTimeout,
               errorMessage:
-                'The search failed due to the API search limit. You can retry your search by pressing the "Retry Search" button.'
+                'A temporary AttackerKB search limit was reached. You can retry your search by pressing the "Retry Search" button.'
             }
           }
         });
@@ -184,6 +187,7 @@ function doLookup(entities, options, cb) {
             {
               numEntitiesLookedUp: entities.length,
               numConnectionResets: numConnectionResets,
+              numGatewayTimeouts: numGatewayTimeouts,
               numLookupsThrottled: numThrottled
             },
             'Lookup Limit Error'

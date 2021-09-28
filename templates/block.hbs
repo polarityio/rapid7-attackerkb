@@ -1,18 +1,10 @@
 {{#if details.errorMessage}}
-  <div class="mt-2">
-    <div class="alert alert-danger">
-      {{! 
-        details.errorMessage should contain custom error message info about the failure.
-        For example, we could not only have why it failed, but if it is a limit error
-        we can put a timer here counting down to when retrying makes sense etc.
-      }}
-      <pre>{{details.errorMessage}}</pre>
-    </div>
+  <div>
     {{! Can optionally use the "allowRetry" boolean flag in details to disable retry logic }}
     {{#if (not (eq details.allowRetry false))}}
       <button
         type="button"
-        class="p-btn btn btn-sm btn-secondary retry-btn mt-2"
+        class="p-btn btn btn-sm btn-polarity retry-btn"
         {{action "retryLookup"}}
       >
         {{#if running}}
@@ -21,11 +13,16 @@
           Retry Search
         {{/if}}
       </button>
-      <div class="mt-1">
-        <span class="p-footnote">
-          You can retry your search by pressing the "Retry Search" button.</span>
-      </div>
     {{/if}}
+    <div class="mt-1">
+        {{details.errorMessage}}
+    </div>
+    <div class="mt-1">
+        <a class="p-link" href="https://attackerkb.com/search?q={{block.entity.value}}">Run Search via AttackerKB Web Interface {{fa-icon "external-link-square" class="external-link-icon"}}</a>
+    </div>
+    <div>
+        <span class="p-footnote">Use the link to run this search via the AttackerKB website.</span>
+    </div>
   </div>
 {{else}}
   {{#if block.data}}
