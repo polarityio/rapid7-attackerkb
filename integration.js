@@ -35,10 +35,10 @@ function startup(logger) {
 
 function _setupLimiter(options) {
   limiter = new Bottleneck({
-    maxConcurrent: Number.parseInt(options.maxConcurrent, 10), // no more than 5 lookups can be running at single time
+    maxConcurrent: Number.parseInt(options.maxConcurrent, 10), // no more than options.maxConcurrent lookups can be running at single time
     highWater: 100, // no more than 100 lookups can be queued up
     strategy: Bottleneck.strategy.OVERFLOW,
-    minTime: Number.parseInt(options.minTime, 10) // don't run lookups faster than 1 every 200 ms
+    minTime: Number.parseInt(options.minTime, 10) // don't run lookups faster than 1 every options.minTime
   });
 }
 
@@ -53,14 +53,14 @@ function _lookupEntity(entity, options, cb) {
   };
   if (options.publicOnly === true) {
     requestOptions.qs = {
-      name: entity.value,
+      q: `"${entity.value}"`,
       size: options.resultCount,
       sort: 'revisionDate:desc',
       metadata: 'PUBLIC'
     };
   } else if (options.publicOnly === false) {
     requestOptions.qs = {
-      name: entity.value,
+      q: `"${entity.value}"`,
       size: options.resultCount,
       sort: 'revisionDate:desc'
     };
@@ -130,8 +130,8 @@ function getSummary(res) {
     const { data } = res.body;
     // ask about this in review, summary not rendering in overlay
     for (const block of data) {
-      tags.push(`Attacker Value Score: ${block.score.attackerValue}`);
-      tags.push(`Exploitability Score: ${block.score.exploitability}`);
+      tags.push(`Max Attacker Value Score: ${block.score.attackerValue}`);
+      tags.push(`Max Exploitability Score: ${block.score.exploitability}`);
       tags.push(`Name: ${block.name}`);
     }
   }
