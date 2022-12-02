@@ -1,5 +1,5 @@
 'use strict';
-const request = require('request');
+const request = require('postman-request');
 const Bottleneck = require('bottleneck/es5');
 const _ = require('lodash');
 const config = require('./config/config');
