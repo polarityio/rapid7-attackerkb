@@ -5,7 +5,7 @@ module.exports = {
    * @type String
    * @required
    */
-  name: 'AttackerKB Topic Search',
+  name: 'Rapid7 AttackerKB',
   /**
    * The acronym that appears in the notification window when information from this integration
    * is displayed.  Note that the acronym is included as part of each "tag" in the summary information
@@ -15,14 +15,14 @@ module.exports = {
    * @type String
    * @required
    */
-  acronym: 'ATTACK',
+  acronym: 'R7-ATCK',
   /**
    * Description for this integration which is displayed in the Polarity integrations user interface
    *
    * @type String
    * @optional
    */
-  description: 'This integration queries CVE IDs against the AttackerKB Topic API.',
+  description: 'This integration queries CVEs against the AttackerKB Topic API.',
   entityTypes: ['cve'],
   styles: ['./styles/style.less'],
   /**

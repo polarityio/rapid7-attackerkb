@@ -145,19 +145,19 @@
       {{#if detail.disclosureDate}}
         <div>
           <span class="p-key">Disclosure Date: </span>
-          <span class="p-value">{{detail.disclosureDate}}</span>
+          <span class="p-value">{{moment-format detail.disclosureDate "YYYY-MM-DD HH:mm:ss z" timeZone=timezone}}</span>
         </div>
       {{/if}}
       {{#if detail.created}}
         <div>
           <span class="p-key">Topic Created: </span>
-          <span class="p-value">{{detail.created}}</span>
+          <span class="p-value">{{moment-format detail.created "YYYY-MM-DD HH:mm:ss z" timeZone=timezone}}</span>
         </div>
       {{/if}}
       {{#if detail.revisionDate}}
         <div>
           <span class="p-key">Topic Last Updated: </span>
-          <span class="p-value">{{detail.revisionDate}}</span>
+          <span class="p-value">{{moment-format detail.revisionDate "YYYY-MM-DD HH:mm:ss z" timeZone=timezone}}</span>
         </div>
       {{/if}}
       {{#if detail.document}}
@@ -175,7 +175,7 @@
       {{#if detail.metadata.vendor.productNames}}
         <h1 class="p-title">{{fa-icon "box-open" fixedWidth=true}}Products: </h1>
         {{#each detail.metadata.vendor.productNames as |product|}}
-          <span class="p-value">{{product}}</span>
+          <span class="p-value p-block">{{product}}</span>
         {{/each}}
       {{/if}}
       {{#if detail.metadata.vulnerable-versions}}
