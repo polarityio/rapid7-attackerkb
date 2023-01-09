@@ -1,0 +1,86 @@
+{
+  "name": "Rapid7 AttackerKB",
+  "acronym": "R7-ATCK",
+  "description": "This integration queries CVEs against the AttackerKB Topic API.",
+  "entityTypes": [
+    "cve"
+  ],
+  "styles": [
+    "./styles/style.less"
+  ],
+  "block": {
+    "component": {
+      "file": "./components/block.js"
+    },
+    "template": {
+      "file": "./templates/block.hbs"
+    }
+  },
+  "summary": {
+    "component": {
+      "file": "./components/summary.js"
+    },
+    "template": {
+      "file": "./templates/summary.hbs"
+    }
+  },
+  "onDemandOnly": true,
+  "request": {
+    "cert": "",
+    "key": "",
+    "passphrase": "",
+    "ca": "",
+    "proxy": "",
+    "rejectUnauthorized": true
+  },
+  "logging": {
+    "level": "info"
+  },
+  "options": [
+    {
+      "key": "apiKey",
+      "name": "Valid AttackerKB API Key",
+      "description": "Valid AttackerKB API Key",
+      "default": "",
+      "type": "password",
+      "userCanEdit": true,
+      "adminOnly": false
+    },
+    {
+      "key": "resultCount",
+      "name": "Maximum Number of Results",
+      "description": "The maximum number of API search results that will be displayed in the Polarity Overlay window. (Default: 5)",
+      "default": 5,
+      "type": "number",
+      "userCanEdit": true,
+      "adminOnly": false
+    },
+    {
+      "key": "publicOnly",
+      "name": "Only Show Publicly Disclosed Vulnerabilities",
+      "description": "If checked, only vulnerabilities with a current state of PUBLIC will be returned. (Defaults to enabled)",
+      "default": true,
+      "type": "boolean",
+      "userCanEdit": true,
+      "adminOnly": false
+    },
+    {
+      "key": "maxConcurrent",
+      "name": "Max Concurrent Requests",
+      "description": "Maximum number of concurrent requests.  Integration must be restarted after changing this option. Defaults to 20.",
+      "default": 20,
+      "type": "number",
+      "userCanEdit": false,
+      "adminOnly": true
+    },
+    {
+      "key": "minTime",
+      "name": "Minimum Time Between Lookups",
+      "description": "Minimum amount of time in milliseconds between lookups. Integration must be restarted after changing this option. Defaults to 100.",
+      "default": 100,
+      "type": "number",
+      "userCanEdit": false,
+      "adminOnly": true
+    }
+  ]
+}
