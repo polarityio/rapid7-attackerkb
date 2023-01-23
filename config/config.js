@@ -24,6 +24,7 @@ module.exports = {
    */
   description: 'This integration queries CVEs against the AttackerKB Topic API.',
   entityTypes: ['cve'],
+  defaultColor: 'light-gray',
   styles: ['./styles/style.less'],
   /**
    * Provide custom component logic and template for rendering the integration details block.  If you do not
