@@ -275,17 +275,15 @@
               {{fa-icon "external-link-square" class="external-link-icon"}}</a></span>
         {{/each}}
       {{/if}}
-      {{#if (gt (inc detail.metadata.references.length) 2)}}
+      {{#if (gt detail.metadata.references.length 0)}}
         <h1 class="p-title">{{fa-icon "browser" fixedWidth=true}}References: </h1>
         <div>
           {{#each detail.metadata.references as |ref index|}}
-            {{#if (gt (inc index) 1)}}
               <span class="p-value"><a href="{{ref}}">{{ref}}
                   {{fa-icon
                     "external-link-square"
                     class="external-link-icon"
                   }}</a></span><br />
-            {{/if}}
           {{/each}}
         </div>
       {{/if}}
