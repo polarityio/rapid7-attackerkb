@@ -79,7 +79,7 @@ test('500 response should result in `isGatewayTimeout`', (done) => {
 test('ECONNRESET response should result in `isConnectionReset`', (done) => {
   const scope = nock(`https://api.attackerkb.com/v1/topics`)
     .get(/.*/)
-    .replyWithError({ code: 'ECONNRESET' });
+    .replyWithError(Object.assign(new Error('Connection reset'), { code: 'ECONNRESET' }));
   doLookup([cve], options, (err, lookupResults) => {
     // console.info(JSON.stringify(lookupResults, null, 4));
     expect(lookupResults.length).toBe(1);
