@@ -2,8 +2,6 @@
 const request = require('postman-request');
 const Bottleneck = require('bottleneck/es5');
 const _ = require('lodash');
-const config = require('./config/config');
-const fs = require('fs');
 let Logger;
 let requestWithDefaults;
 let limiter = null;
@@ -11,25 +9,7 @@ let limiter = null;
 function startup(logger) {
   let defaults = {};
   Logger = logger;
-  const { cert, key, passphrase, ca, proxy, rejectUnauthorized } = config.request;
-  if (typeof cert === 'string' && cert.length > 0) {
-    defaults.cert = fs.readFileSync(cert);
-  }
-  if (typeof key === 'string' && key.length > 0) {
-    defaults.key = fs.readFileSync(key);
-  }
-  if (typeof passphrase === 'string' && passphrase.length > 0) {
-    defaults.passphrase = passphrase;
-  }
-  if (typeof ca === 'string' && ca.length > 0) {
-    defaults.ca = fs.readFileSync(ca);
-  }
-  if (typeof proxy === 'string' && proxy.length > 0) {
-    defaults.proxy = proxy;
-  }
-  if (typeof rejectUnauthorized === 'boolean') {
-    defaults.rejectUnauthorized = rejectUnauthorized;
-  }
+
   requestWithDefaults = request.defaults(defaults);
 }
 
@@ -47,20 +27,22 @@ function _lookupEntity(entity, options, cb) {
     method: 'GET',
     uri: `https://api.attackerkb.com/v1/topics`,
     headers: {
-      Authorization: 'basic ' + options.apiKey
+      // AttackerKB expects a bearer token; previously this was sent as basic
+      Authorization: `Bearer ${options.apiKey}`
     },
     json: true
   };
+  
   if (options.publicOnly === true) {
     requestOptions.qs = {
-      q: `"${entity.value}"`,
+      q: entity.value,
       size: options.resultCount,
       sort: 'revisionDate:desc',
       metadata: 'PUBLIC'
     };
   } else if (options.publicOnly === false) {
     requestOptions.qs = {
-      q: `"${entity.value}"`,
+      q: entity.value,
       size: options.resultCount,
       sort: 'revisionDate:desc'
     };
