@@ -1,0 +1,56 @@
+{
+  "root": {
+    "path": "",
+    "on_null": "return_empty"
+  },
+  "pipeline": [
+    {
+      "op": "copy",
+      "from": "[].id",
+      "to": "reduced_results.topics_id"
+    },
+    {
+      "op": "copy",
+      "from": "[].name",
+      "to": "reduced_results.topics_name"
+    },
+    {
+      "op": "copy",
+      "from": "[].score",
+      "to": "reduced_results.topics_scores"
+    },
+    {
+      "op": "copy",
+      "from": "[].disclosureDate",
+      "to": "reduced_results.topics_disclosure_date"
+    },
+    {
+      "op": "copy",
+      "from": "[].created",
+      "to": "reduced_results.topics_created"
+    },
+    {
+      "op": "copy",
+      "from": "[].revisionDate",
+      "to": "reduced_results.topics_revision_date"
+    },
+    {
+      "op": "copy",
+      "from": "[].document",
+      "to": "reduced_results.topics_document"
+    },
+    {
+      "op": "copy",
+      "from": "[].metadata",
+      "to": "reduced_results.topics_metadata"
+    },
+    {
+      "op": "prune",
+      "strategy": "empty_values",
+      "target": "reduced_results"
+    }
+  ],
+  "output": {
+    "result": "$working.reduced_results"
+  }
+}

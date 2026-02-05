@@ -3,9 +3,13 @@
   "name": "Rapid7 AttackerKB",
   "acronym": "R7-ATCK",
   "description": "This integration queries CVEs against the AttackerKB Topic API.",
-  "entityTypes": ["cve"],
+  "entityTypes": [
+    "cve"
+  ],
   "defaultColor": "light-gray",
-  "styles": ["./styles/style.less"],
+  "styles": [
+    "./styles/style.less"
+  ],
   "block": {
     "component": {
       "file": "./components/block.js"
@@ -79,5 +83,10 @@
       "userCanEdit": false,
       "adminOnly": true
     }
-  ]
+  ],
+  "reducer": {
+    "details": {
+      "file": "./reducers/details.json"
+    }
+  }
 }
